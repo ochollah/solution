@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRISIS TO SOLUTION — Innovation and Impact Platform</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Quill Editor CSS & JS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .ql-editor { min-height: 150px; font-size: 0.95rem; color: #0f172a; }
+        .ql-container.ql-snow { border-bottom-left-radius: 0.75rem; border-bottom-right-radius: 0.75rem; border-color: #cbd5e1; }
+        .ql-toolbar.ql-snow { border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem; border-color: #cbd5e1; background: #f8fafc; }
+        .leaflet-container { z-index: 10; border-radius: 0.75rem; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 antialiased min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="sticky top-0 z-40 w-full bg-slate-950/90 backdrop-blur-md border-b border-slate-800 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Logo & Brand Name -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('landing')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-shield-cat text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-emerald-400 bg-clip-text text-transparent">CRISIS TO SOLUTION</span>
+                        <span class="block text-[10px] text-emerald-400 font-semibold uppercase tracking-widest -mt-1">Innovation Platform</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="hidden md:flex items-center space-x-1">
+                    <button onclick="switchTab('landing')" id="nav-landing" class="px-3.5 py-2 rounded-lg text-sm font-medium transition hover:bg-slate-800 text-white">
+                        <i class="fa-solid fa-house mr-1.5 text-slate-400"></i> Home
+                    </button>
+                    <button onclick="switchTab('explore')" id="nav-explore" class="px-3.5 py-2 rounded-lg text-sm font-medium transition hover:bg-slate-800 text-slate-300 hover:text-white">
+                        <i class="fa-solid fa-compass mr-1.5 text-slate-400"></i> Explore Crises
+                    </button>
+                    <button id="nav-submit" onclick="handleNewSubmissionClick()" class="px-3.5 py-2 rounded-lg text-sm font-medium transition hover:bg-slate-800 text-slate-300 hover:text-white">
+                        <i class="fa-solid fa-plus-circle mr-1.5 text-emerald-400"></i> Submit Problem
+                    </button>
+                    <button id="nav-dashboard" onclick="switchTab('user-dashboard')" class="hidden px-3.5 py-2 rounded-lg text-sm font-medium transition hover:bg-slate-800 text-slate-300 hover:text-white">
+                        <i class="fa-solid fa-chart-line mr-1.5 text-slate-400"></i> User Dashboard
+                    </button>
+                    <button id="nav-admin" onclick="switchTab('admin-dashboard')" class="hidden px-3.5 py-2 rounded-lg text-sm font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition">
+                        <i class="fa-solid fa-user-shield mr-1.5"></i> Admin Dashboard
+                    </button>
+                </nav>
+
+                <!-- Auth & Config Controls -->
+                <div class="flex items-center space-x-3">
+                    <button onclick="openModal('admin-login-modal')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 flex items-center gap-1.5" title="Admin Portal Access">
+                        <i class="fa-solid fa-user-gear"></i> Admin Sign In
+                    </button>
+
+                    <div id="firebase-status-badge" class="hidden md:flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <span id="storage-status-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse mr-1.5"></span>
+                        <span id="storage-mode-text">Firebase Status: Initializing</span>
+                    </div>
+
+                    <div id="auth-logged-out" class="flex items-center space-x-2">
+                        <button onclick="openModal('login-modal')" class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition">Sign In</button>
+                        <button onclick="openModal('register-modal')" class="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition shadow-md shadow-emerald-600/20">Register</button>
+                    </div>
+
+                    <div id="auth-logged-in" class="hidden flex items-center space-x-3">
+                        <div class="text-right hidden sm:block">
+                            <div id="user-display-name" class="text-sm font-semibold text-white leading-tight">User</div>
+                            <div id="user-display-role" class="text-[11px] text-emerald-400 uppercase font-bold tracking-wider">Member</div>
+                        </div>
+                        <div class="relative group">
+                            <button class="w-10 h-10 rounded-full bg-slate-800 border-2 border-emerald-500 flex items-center justify-center text-white font-bold text-sm shadow">
+                                <span id="user-avatar-initials">U</span>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-52 bg-slate-800 rounded-xl shadow-2xl py-2 border border-slate-700 hidden group-hover:block z-50 text-slate-200 text-sm">
+                                <a href="#" onclick="switchTab('user-dashboard'); return false;" class="block px-4 py-2 hover:bg-slate-700/60"><i class="fa-solid fa-table-columns mr-2 text-slate-400"></i> Dashboard</a>
+                                <a href="#" onclick="switchTab('submit-wizard'); return false;" class="block px-4 py-2 hover:bg-slate-700/60"><i class="fa-solid fa-pen-to-square mr-2 text-slate-400"></i> Submit Crisis</a>
+                                <hr class="my-1 border-slate-700">
+                                <button onclick="logoutUser()" class="w-full text-left px-4 py-2 text-rose-400 hover:bg-rose-500/10 flex items-center"><i class="fa-solid fa-right-from-bracket mr-2"></i> Sign Out</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- MAIN CONTENT SECTIONS -->
+    <main class="flex-grow">
+
+        <!-- 1. PUBLIC LANDING PAGE -->
+        <section id="tab-landing" class="tab-content">
+            <div class="relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white pt-16 pb-20 overflow-hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+                    <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-6">
+                        <i class="fa-solid fa-lock text-amber-400"></i> Owner-Controlled Solution Privacy Protocol Enabled
+                    </span>
+                    <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight">
+                        Every Problem Deserves a <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400 bg-clip-text text-transparent">Practical Solution</span>.
+                    </h1>
+                    <p class="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto font-normal leading-relaxed">
+                        Document critical challenges with real evidence, formulate step-by-step solutions, and securely manage access to implementation blueprints.
+                    </p>
+                    
+                    <div class="mt-8 flex flex-wrap justify-center gap-4">
+                        <button onclick="handleNewSubmissionClick()" class="px-7 py-3.5 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 transition flex items-center gap-2">
+                            <i class="fa-solid fa-plus-circle"></i> Identify a Crisis
+                        </button>
+                        <button onclick="switchTab('explore')" class="px-7 py-3.5 rounded-xl font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition flex items-center gap-2">
+                            <i class="fa-solid fa-compass"></i> Explore Published Problems
+                        </button>
+                    </div>
+
+                    <!-- Real-Time Statistics -->
+                    <div class="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-8 border-t border-slate-800">
+                        <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+                            <div class="text-2xl sm:text-3xl font-extrabold text-emerald-400" id="stat-total-users">0</div>
+                            <div class="text-xs text-slate-400 mt-1 uppercase font-medium tracking-wider">Registered Solvers</div>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+                            <div class="text-2xl sm:text-3xl font-extrabold text-sky-400" id="stat-problems">0</div>
+                            <div class="text-xs text-slate-400 mt-1 uppercase font-medium tracking-wider">Crises Documented</div>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+                            <div class="text-2xl sm:text-3xl font-extrabold text-amber-400" id="stat-solutions">0</div>
+                            <div class="text-xs text-slate-400 mt-1 uppercase font-medium tracking-wider">Solutions Formulated</div>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+                            <div class="text-2xl sm:text-3xl font-extrabold text-teal-400" id="stat-granted">0</div>
+                            <div class="text-xs text-slate-400 mt-1 uppercase font-medium tracking-wider">Access Grants</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LANDING PAGE LEAFLET MAP SECTION -->
+            <div class="py-12 bg-slate-900 border-y border-slate-800">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-2">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-earth-africa text-emerald-400"></i> Global Crises & Solutions Map
+                            </h2>
+                            <p class="text-slate-400 text-xs">Tap pins across the globe to inspect crisis details and author profiles.</p>
+                        </div>
+                        <span class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-circle text-[8px] mr-1"></i> Live Geo-Pins Active</span>
+                    </div>
+
+                    <div id="landing-map" class="h-96 w-full rounded-2xl border border-slate-700 shadow-2xl"></div>
+                </div>
+            </div>
+
+            <!-- Published Cards Grid -->
+            <div class="py-16 bg-slate-950">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                        <div>
+                            <h2 class="text-2xl sm:text-3xl font-bold text-white">Featured Approved Crises</h2>
+                            <p class="text-slate-400 mt-1">Verified problem submissions open for solution access requests.</p>
+                        </div>
+                        <button onclick="switchTab('explore')" class="text-emerald-400 font-semibold hover:text-emerald-300 flex items-center gap-1.5 text-sm">
+                            View All Submissions <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </div>
+                    <div id="landing-cards-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. EXPLORE PROBLEMS PAGE -->
+        <section id="tab-explore" class="tab-content hidden py-10 bg-slate-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 mb-8 shadow-lg">
+                    <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                        <div class="relative w-full md:w-96">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-500"></i>
+                            <input type="text" id="explore-search-input" onkeyup="filterExploreCards()" placeholder="Search title, location, or cause..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">Category:</span>
+                            <select id="explore-category-filter" onchange="filterExploreCards()" class="px-3 py-2 rounded-xl border border-slate-700 text-sm bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="ALL">All Categories</option>
+                                <option value="Education">Education</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Agriculture">Agriculture & Food</option>
+                                <option value="Technology">Technology & AI</option>
+                                <option value="Environment">Environment & Climate</option>
+                                <option value="Water">Water & Sanitation</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="Governance">Governance</option>
+                                <option value="Community">Community Development</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="explore-cards-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+            </div>
+        </section>
+
+        <!-- 3. CREATE SUBMISSION WIZARD (STAGE 2 & STAGE 3) -->
+        <section id="tab-submit-wizard" class="tab-content hidden py-10 bg-slate-900">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-slate-800/90 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden">
+                    <div class="bg-slate-950 px-6 py-6 border-b border-slate-800 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold text-white">Document Crisis & Formulate Solution</h2>
+                            <p class="text-xs text-slate-400 mt-1">Both Quill Editor A (Problem) and Quill Editor B (Solution) are required before submission.</p>
+                        </div>
+                        <span class="px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs rounded-full font-semibold">
+                            Mandatory Submission Rule Active
+                        </span>
+                    </div>
+
+                    <form id="problem-solution-form" onsubmit="handleFormSubmission(event)" class="p-6 sm:p-8 space-y-10">
+                        
+                        <!-- STAGE 2: PROBLEM DETAILS -->
+                        <div class="space-y-6">
+                            <div class="flex items-center space-x-3 pb-3 border-b border-slate-700">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/30">A</div>
+                                <h3 class="text-lg font-bold text-white">Stage 2: Negative Opportunity / Crisis Identification</h3>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Problem Title *</label>
+                                    <input type="text" id="input-prob-title" required placeholder="e.g. Groundwater Contamination in Sector 4" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Category *</label>
+                                    <select id="input-prob-category" required class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 text-sm">
+                                        <option value="Water">Water & Sanitation</option>
+                                        <option value="Agriculture">Agriculture & Food</option>
+                                        <option value="Healthcare">Healthcare & Medicine</option>
+                                        <option value="Education">Education & Skills</option>
+                                        <option value="Technology">Technology & AI</option>
+                                        <option value="Environment">Environment & Climate</option>
+                                        <option value="Infrastructure">Infrastructure</option>
+                                        <option value="Governance">Governance & Public Services</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Country / Region *</label>
+                                    <input type="text" id="input-prob-region" required placeholder="e.g. Kenya, Kiambu County" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Affected Community / Industry *</label>
+                                    <input type="text" id="input-prob-community" required placeholder="e.g. Rural Farmers" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Severity Scale (1-10) *</label>
+                                    <input type="number" id="input-prob-severity" min="1" max="10" value="8" required class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 text-sm">
+                                </div>
+                            </div>
+
+                            <!-- Form Leaflet Map Picker -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300">Geo-Location Pin Drag or Auto-Detect</label>
+                                    <button type="button" onclick="detectUserLocation('submission')" class="text-xs text-emerald-400 font-semibold hover:underline flex items-center gap-1">
+                                        <i class="fa-solid fa-location-crosshairs"></i> Auto-Detect Location
+                                    </button>
+                                </div>
+                                <div id="map-picker" class="h-48 w-full rounded-xl border border-slate-700"></div>
+                                <input type="hidden" id="input-prob-lat" value="-1.0388">
+                                <input type="hidden" id="input-prob-lng" value="37.0833">
+                            </div>
+
+                            <!-- Quill Editor A (Problem) -->
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Detailed Problem Description (Quill Editor A) *</label>
+                                <div class="bg-white text-slate-900 rounded-xl overflow-hidden">
+                                    <div id="editor-problem"></div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Root Causes</label>
+                                    <textarea id="input-prob-causes" rows="3" placeholder="Outline structural limits or systemic causes..." class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Estimated Financial Impact ($ USD)</label>
+                                    <textarea id="input-prob-impact" rows="3" placeholder="e.g. $180,000 annual healthcare & economic loss..." class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Multiple Images & 20MB Video Uploads for Problem -->
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Public Evidence Media (Multiple Images & Up to 20MB Video)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="p-4 rounded-xl border border-slate-700 bg-slate-900">
+                                        <span class="block text-xs font-bold text-slate-300 mb-2"><i class="fa-solid fa-images mr-1 text-emerald-400"></i> Multiple Evidence Photos</span>
+                                        <input type="file" id="input-prob-image-files" accept="image/*" multiple onchange="handleMultipleMedia(this, 'prob-imgs-preview', 'prob')" class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30">
+                                        <div id="prob-imgs-preview" class="mt-3 grid grid-cols-3 gap-2"></div>
+                                    </div>
+                                    <div class="p-4 rounded-xl border border-slate-700 bg-slate-900">
+                                        <span class="block text-xs font-bold text-slate-300 mb-2"><i class="fa-solid fa-video mr-1 text-emerald-400"></i> Evidence Video Stream (Max 20MB)</span>
+                                        <input type="file" id="input-prob-video-file" accept="video/*" onchange="handleSingleVideo(this, 'prob-video-preview', 'prob')" class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-500/20 file:text-emerald-400 hover:file:bg-emerald-500/30">
+                                        <div id="prob-video-preview" class="mt-3"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STAGE 3: SOLUTIONS DETAILS -->
+                        <div class="space-y-6 pt-6 border-t border-slate-700">
+                            <div class="flex items-center space-x-3 pb-3 border-b border-slate-700">
+                                <div class="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 font-bold flex items-center justify-center border border-teal-500/30">B</div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white">Stage 3: Possible Solution Formulator</h3>
+                                    <span class="text-xs text-emerald-400 font-medium"><i class="fa-solid fa-lock text-xs mr-1"></i> Private Blueprint (Hidden from public feed)</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Solution Title *</label>
+                                    <input type="text" id="input-sol-title" required placeholder="e.g. Solar Multi-Stage Water Filtration System" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Estimated Budget & Funding ($ USD) *</label>
+                                    <input type="text" id="input-sol-budget" required placeholder="e.g. $14,500 USD (Micro-Grant)" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 text-sm">
+                                </div>
+                            </div>
+
+                            <!-- Quill Editor B (Solution) -->
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Implementation Methodology & Step-by-Step Plan (Quill Editor B) *</label>
+                                <div class="bg-white text-slate-900 rounded-xl overflow-hidden">
+                                    <div id="editor-solution"></div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Required Tools & Materials</label>
+                                    <textarea id="input-sol-tools" rows="2" placeholder="e.g. UV Lamps, Inverters, Carbon Tanks" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Potential Risks & Mitigation</label>
+                                    <textarea id="input-sol-risks" rows="2" placeholder="e.g. Solar power interruption -> Battery backup" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Expected Outcomes</label>
+                                    <textarea id="input-sol-outcomes" rows="2" placeholder="e.g. 10,000 Liters clean water per day" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Multiple Images & 20MB Video Uploads for Solution -->
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Private Blueprint Attachments (Multiple Images & Up to 20MB Video)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="p-4 rounded-xl border border-slate-700 bg-slate-900">
+                                        <span class="block text-xs font-bold text-slate-300 mb-2"><i class="fa-solid fa-file-image mr-1 text-teal-400"></i> Multiple Technical Blueprint Images</span>
+                                        <input type="file" id="input-sol-image-files" accept="image/*" multiple onchange="handleMultipleMedia(this, 'sol-imgs-preview', 'sol')" class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-500/20 file:text-teal-400 hover:file:bg-teal-500/30">
+                                        <div id="sol-imgs-preview" class="mt-3 grid grid-cols-3 gap-2"></div>
+                                    </div>
+                                    <div class="p-4 rounded-xl border border-slate-700 bg-slate-900">
+                                        <span class="block text-xs font-bold text-slate-300 mb-2"><i class="fa-solid fa-film mr-1 text-teal-400"></i> Solution Demonstration Video (Max 20MB)</span>
+                                        <input type="file" id="input-sol-video-file" accept="video/*" onchange="handleSingleVideo(this, 'sol-video-preview', 'sol')" class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-500/20 file:text-teal-400 hover:file:bg-teal-500/30">
+                                        <div id="sol-video-preview" class="mt-3"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="pt-6 border-t border-slate-700 flex items-center justify-end">
+                            <button type="submit" class="px-7 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/20 transition flex items-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i> Submit For Admin Moderation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. USER DASHBOARD -->
+        <section id="tab-user-dashboard" class="tab-content hidden py-10 bg-slate-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">User Control Dashboard</h1>
+                        <p class="text-slate-400 text-sm">Manage submissions, inspect requesters, and dispatch WhatsApp acceptance/decline messages.</p>
+                    </div>
+                    <button onclick="switchTab('submit-wizard')" class="px-4 py-2 bg-emerald-600 text-white font-semibold text-sm rounded-xl hover:bg-emerald-500 transition shadow">
+                        <i class="fa-solid fa-plus mr-1"></i> New Crisis Submission
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 shadow-sm">
+                        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">My Submissions</div>
+                        <div class="text-2xl font-bold text-white mt-1" id="ud-stat-submissions">0</div>
+                    </div>
+                    <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 shadow-sm">
+                        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Published Feed</div>
+                        <div class="text-2xl font-bold text-emerald-400 mt-1" id="ud-stat-published">0</div>
+                    </div>
+                    <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 shadow-sm">
+                        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Incoming Requests</div>
+                        <div class="text-2xl font-bold text-amber-400 mt-1" id="ud-stat-requests">0</div>
+                    </div>
+                    <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 shadow-sm">
+                        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Granted Access</div>
+                        <div class="text-2xl font-bold text-teal-400 mt-1" id="ud-stat-access-granted">0</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800/90 rounded-2xl border border-slate-700 shadow-lg overflow-hidden mb-8">
+                    <div class="flex border-b border-slate-700 bg-slate-950 px-4 overflow-x-auto">
+                        <button onclick="switchUserDashTab('my-problems')" id="ud-tab-btn-my-problems" class="px-5 py-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-400 whitespace-nowrap">
+                            <i class="fa-solid fa-folder-open mr-2"></i> My Submissions
+                        </button>
+                        <button onclick="switchUserDashTab('incoming-requests')" id="ud-tab-btn-incoming-requests" class="px-5 py-3 text-sm font-semibold text-slate-400 hover:text-white whitespace-nowrap">
+                            <i class="fa-solid fa-bell mr-2"></i> Solution Access Requests
+                        </button>
+                        <button onclick="switchUserDashTab('my-access')" id="ud-tab-btn-my-access" class="px-5 py-3 text-sm font-semibold text-slate-400 hover:text-white whitespace-nowrap">
+                            <i class="fa-solid fa-key mr-2"></i> Authorized Hidden Solutions
+                        </button>
+                        <button onclick="switchUserDashTab('account-settings')" id="ud-tab-btn-account-settings" class="px-5 py-3 text-sm font-semibold text-slate-400 hover:text-white whitespace-nowrap">
+                            <i class="fa-solid fa-user-gear mr-2"></i> Profile & Security
+                        </button>
+                    </div>
+
+                    <div id="ud-tab-my-problems" class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-300">
+                                <thead class="bg-slate-900 text-xs font-semibold uppercase text-slate-400 border-b border-slate-700">
+                                    <tr>
+                                        <th class="py-3 px-4">Problem Title</th>
+                                        <th class="py-3 px-4">Category</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4">Date</th>
+                                        <th class="py-3 px-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ud-table-my-problems" class="divide-y divide-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="ud-tab-incoming-requests" class="p-6 hidden">
+                        <div id="ud-incoming-requests-list" class="space-y-4"></div>
+                    </div>
+
+                    <div id="ud-tab-my-access" class="p-6 hidden">
+                        <div id="ud-authorized-solutions-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                    </div>
+
+                    <div id="ud-tab-account-settings" class="p-6 hidden max-w-2xl">
+                        <form onsubmit="updateProfileSettings(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Full Name</label>
+                                <input type="text" id="ud-set-fullname" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Phone / WhatsApp</label>
+                                <input type="text" id="ud-set-phone" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Organization / Institution</label>
+                                <input type="text" id="ud-set-org" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Change Password</label>
+                                <input type="password" id="ud-set-password" placeholder="Enter new password to change" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm">
+                            </div>
+                            <button type="submit" class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-500 transition">Save Profile Changes</button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 5. ENTERPRISE ADMINISTRATOR DASHBOARD & ANALYTICS -->
+        <section id="tab-admin-dashboard" class="tab-content hidden py-10 bg-slate-950 text-slate-100 min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-800 mb-8 gap-4">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30">Admin Control Center</span>
+                            <span class="text-xs text-slate-400">Live Firestore Analytics</span>
+                        </div>
+                        <h1 class="text-3xl font-extrabold text-white mt-1">Platform Moderation & Universal Author Management</h1>
+                    </div>
+
+                    <!-- Date Range Filter Bar -->
+                    <div class="flex flex-wrap items-center gap-2 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-400 font-semibold px-2 uppercase">Period:</span>
+                        <button onclick="setAdminDateFilter('today')" id="adm-filter-today" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 text-slate-300 hover:text-white">Today</button>
+                        <button onclick="setAdminDateFilter('7days')" id="adm-filter-7days" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 text-slate-300 hover:text-white">Last 7 Days</button>
+                        <button onclick="setAdminDateFilter('30days')" id="adm-filter-30days" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 text-slate-300 hover:text-white">Last 30 Days</button>
+                        <button onclick="setAdminDateFilter('all')" id="adm-filter-all" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white">All Time</button>
+                        <button onclick="exportAdminCSVReport()" class="ml-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow"><i class="fa-solid fa-download mr-1"></i> Export CSV</button>
+                    </div>
+                </div>
+
+                <!-- 10 KPI CARDS GRID -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Total Solvers</div>
+                        <div class="text-2xl font-bold text-white mt-1" id="adm-kpi-users">0</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Active Solvers</div>
+                        <div class="text-2xl font-bold text-emerald-400 mt-1" id="adm-kpi-active-users">0</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Suspended Users</div>
+                        <div class="text-2xl font-bold text-rose-400 mt-1" id="adm-kpi-suspended">0</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Total Crises</div>
+                        <div class="text-2xl font-bold text-sky-400 mt-1" id="adm-kpi-problems">0</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Pending Review</div>
+                        <div class="text-2xl font-bold text-amber-400 mt-1" id="adm-kpi-pending-reviews">0</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Approved Crises</div>
+                        <div class="text-2xl font-bold text-teal-400 mt-1" id="adm-kpi-approved-problems">0</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Published Feed</div>
+                        <div class="text-2xl font-bold text-emerald-400 mt-1" id="adm-kpi-published">0</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Solutions Vault</div>
+                        <div class="text-2xl font-bold text-indigo-400 mt-1" id="adm-kpi-solutions">0</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Access Pipeline</div>
+                        <div class="text-2xl font-bold text-amber-300 mt-1" id="adm-kpi-pending-access">0</div>
+                    </div>
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Granted Accesses</div>
+                        <div class="text-2xl font-bold text-emerald-300 mt-1" id="adm-kpi-granted-access">0</div>
+                    </div>
+                </div>
+
+                <!-- CHART.JS ANALYTICS DASHBOARD -->
+                <div class="mb-10 space-y-6">
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-emerald-400"></i> Visual Platform Analytics (Chart.js)
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-lg">
+                            <div class="text-xs font-semibold text-slate-300 mb-3 uppercase">Problem Status (Doughnut)</div>
+                            <div class="h-56 relative"><canvas id="chart-problem-status"></canvas></div>
+                        </div>
+                        <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-lg">
+                            <div class="text-xs font-semibold text-slate-300 mb-3 uppercase">Solution Vault Status (Pie)</div>
+                            <div class="h-56 relative"><canvas id="chart-solution-status"></canvas></div>
+                        </div>
+                        <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-lg">
+                            <div class="text-xs font-semibold text-slate-300 mb-3 uppercase">Access Request Pipeline (Bar)</div>
+                            <div class="h-56 relative"><canvas id="chart-access-pipeline"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-lg">
+                            <div class="text-xs font-semibold text-slate-300 mb-3 uppercase">Problems by Category (Bar Chart)</div>
+                            <div class="h-60 relative"><canvas id="chart-categories-bar"></canvas></div>
+                        </div>
+                        <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-lg">
+                            <div class="text-xs font-semibold text-slate-300 mb-3 uppercase">Submission & User Trends (Line Chart)</div>
+                            <div class="h-60 relative"><canvas id="chart-trends-line"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADMIN MODERATION TABLES -->
+                <div class="space-y-8">
+                    
+                    <!-- 1. PROBLEM MODERATION TABLE (ALL AUTHORS SUBMISSIONS) -->
+                    <div class="bg-slate-900/90 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+                        <div class="px-6 py-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+                            <h3 class="font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-emerald-400"></i> Universal Problem Submissions & Solutions Control
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-950 uppercase font-semibold text-slate-400 border-b border-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-4">Problem Title</th>
+                                        <th class="py-3 px-4">Author</th>
+                                        <th class="py-3 px-4">Category</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4 text-right">Admin Controls (Inspect / Publish / Delete)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adm-table-problems" class="divide-y divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 2. ACCESS REQUEST SCREENING QUEUE -->
+                    <div class="bg-slate-900/90 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+                        <div class="px-6 py-4 bg-slate-900 border-b border-slate-800">
+                            <h3 class="font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-amber-400"></i> Access Request Screening Pipeline
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-950 uppercase font-semibold text-slate-400 border-b border-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-4">Requester</th>
+                                        <th class="py-3 px-4">Target Crisis</th>
+                                        <th class="py-3 px-4">Reason for Access</th>
+                                        <th class="py-3 px-4">Pipeline Status</th>
+                                        <th class="py-3 px-4 text-right">Screening Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adm-table-requests" class="divide-y divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 3. USER MANAGEMENT TABLE -->
+                    <div class="bg-slate-900/90 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+                        <div class="px-6 py-4 bg-slate-900 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <h3 class="font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-users-gear text-sky-400"></i> Registered Solvers & Role Management
+                            </h3>
+                            <input type="text" id="adm-user-search" onkeyup="renderAdminUserTable()" placeholder="Search name, email, or role..." class="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white">
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-950 uppercase font-semibold text-slate-400 border-b border-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-4">User Details</th>
+                                        <th class="py-3 px-4">Organization</th>
+                                        <th class="py-3 px-4">Role</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4 text-right">Account Controls</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adm-table-users" class="divide-y divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-950 text-slate-400 text-xs py-8 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <span class="font-bold text-slate-200">CRISIS TO SOLUTION</span> &copy; 2026. Firestore Real-Time Production Deployment.
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="#" onclick="switchTab('landing'); return false;" class="hover:text-slate-200">Privacy Policy</a>
+                <a href="#" onclick="switchTab('landing'); return false;" class="hover:text-slate-200">Governance</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: VIEW PROBLEM & HIDDEN SOLUTION ACCESS -->
+    <div id="modal-view-problem" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full border border-slate-800 max-h-[90vh] flex flex-col overflow-hidden my-auto text-slate-200">
+            <div class="p-6 bg-slate-950 border-b border-slate-800 flex justify-between items-start">
+                <div>
+                    <span id="modal-prob-category-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Category</span>
+                    <h2 id="modal-prob-title" class="text-xl font-bold mt-2 text-white">Problem Title</h2>
+                    <p id="modal-prob-meta" class="text-xs text-slate-400 mt-1">By Author • Location</p>
+                </div>
+                <button onclick="closeModal('modal-view-problem')" class="text-slate-400 hover:text-white text-xl p-1"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 text-sm">
+                <div>
+                    <h4 class="font-bold text-slate-400 text-xs uppercase tracking-wider mb-2">Public Problem Overview</h4>
+                    <div id="modal-prob-description" class="prose prose-invert max-w-none bg-slate-950/60 p-4 rounded-xl border border-slate-800"></div>
+                    <div id="modal-prob-images-grid" class="mt-4 grid grid-cols-3 gap-2"></div>
+                </div>
+
+                <!-- STAGE 2: HIDDEN SOLUTIONS MODULE -->
+                <div class="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 shadow-inner">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-shield-halved text-amber-400 text-xl"></i>
+                            <div>
+                                <h3 class="font-bold text-white">Hidden Solution Blueprint</h3>
+                                <p class="text-xs text-slate-400">Owner-controlled private implementation details.</p>
+                            </div>
+                        </div>
+                        <span id="modal-solution-status-tag" class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">RESTRICTED ACCESS</span>
+                    </div>
+
+                    <div id="modal-solution-private-body" class="hidden pt-4 border-t border-slate-800 space-y-4">
+                        <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                            <div class="text-xs text-emerald-400 font-bold uppercase tracking-wider mb-1">Authorized Implementation Blueprint</div>
+                            <div id="modal-sol-title" class="font-bold text-base text-white mb-2"></div>
+                            <div id="modal-sol-content" class="text-slate-300 text-xs mb-4"></div>
+                            <div id="modal-sol-images-grid" class="mb-4 grid grid-cols-3 gap-2"></div>
+                            <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 pt-2 border-t border-slate-800">
+                                <div><strong class="text-slate-200">Budget:</strong> <span id="modal-sol-budget"></span></div>
+                                <div><strong class="text-slate-200">Tools:</strong> <span id="modal-sol-tools"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="modal-solution-request-action" class="pt-2">
+                        <p class="text-xs text-slate-300 mb-3">Implementation details are private. State your reason below to initiate the owner permission workflow.</p>
+                        <div class="space-y-3">
+                            <textarea id="input-request-reason" rows="2" placeholder="Explain your organizational mandate or reason for requesting access..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+                            <button onclick="submitAccessRequestFromModal()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow transition">
+                                <i class="fa-solid fa-paper-plane mr-1.5"></i> Request Access to Solution
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: USER LOGIN -->
+    <div id="login-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 text-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Sign In to Platform</h3>
+                <button onclick="closeModal('login-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form onsubmit="handleUserLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Email Address *</label>
+                    <input type="email" id="login-email" required placeholder="user@platform.org" class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Password *</label>
+                    <div class="relative">
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                        <button type="button" onclick="togglePasswordVisibility('login-password')" class="absolute right-3 top-3 text-slate-500 hover:text-slate-300"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow transition">
+                    Sign In with Firebase Auth
+                </button>
+            </form>
+            <div class="mt-4 pt-4 border-t border-slate-800 text-center text-xs text-slate-400">
+                Need an account? <a href="#" onclick="closeModal('login-modal'); openModal('register-modal'); return false;" class="text-emerald-400 font-semibold hover:underline">Register now</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: ADMIN LOGIN MODAL -->
+    <div id="admin-login-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/30 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 text-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Administrator Access</h3>
+                </div>
+                <button onclick="closeModal('admin-login-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Admin Email Address *</label>
+                    <input type="email" id="admin-login-email" required placeholder="admin@platform.org" class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Admin Password *</label>
+                    <div class="relative">
+                        <input type="password" id="admin-login-password" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-amber-500">
+                        <button type="button" onclick="togglePasswordVisibility('admin-login-password')" class="absolute right-3 top-3 text-slate-500 hover:text-slate-300"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-sm shadow transition">
+                    Authenticate Admin Console
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: USER REGISTRATION -->
+    <div id="register-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-xl w-full p-6 sm:p-8 my-auto text-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-white">Stage 1: User Registration</h3>
+                    <p class="text-xs text-slate-400">Join as an Author / Solution Reader</p>
+                </div>
+                <button onclick="closeModal('register-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form onsubmit="handleUserRegistration(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Full Name *</label>
+                        <input type="text" id="reg-fullname" required placeholder="Dr. Jane Doe" class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Username *</label>
+                        <input type="text" id="reg-username" required placeholder="janedoe" class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Email Address *</label>
+                        <input type="email" id="reg-email" required placeholder="jane@innovate.org" class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Phone / WhatsApp *</label>
+                        <input type="text" id="reg-phone" required placeholder="+254700123456" class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-semibold uppercase text-slate-300">Country / Location *</label>
+                            <button type="button" onclick="detectUserLocation('reg')" class="text-[10px] text-emerald-400 font-bold hover:underline"><i class="fa-solid fa-crosshairs"></i> Detect Map</button>
+                        </div>
+                        <input type="text" id="reg-country" required placeholder="Kenya, Kiambu County" class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Organization / Institution</label>
+                        <input type="text" id="reg-org" placeholder="Water Innovations Lab" class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Professional Field / Interest</label>
+                    <input type="text" id="reg-field" placeholder="Environmental Engineering" class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Password *</label>
+                        <input type="password" id="reg-password" required placeholder="••••••••" class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Confirm Password *</label>
+                        <input type="password" id="reg-password-confirm" required placeholder="••••••••" class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow transition mt-2">
+                    Create Firebase Account
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: INSPECT REQUESTER PROFILE MODAL -->
+    <div id="modal-inspect-requester" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 text-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-user-check text-emerald-400 mr-2"></i> Requester Details</h3>
+                <button onclick="closeModal('modal-inspect-requester')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="inspect-requester-body" class="space-y-3 text-sm bg-slate-950 p-4 rounded-xl border border-slate-800"></div>
+            <div class="mt-4 flex justify-end">
+                <button onclick="closeModal('modal-inspect-requester')" class="px-4 py-2 bg-slate-800 text-white text-xs font-semibold rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN FIREBASE MODULE INTEGRATION -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ================================================================
+        // EMBEDDED FIREBASE CONFIGURATION KEYS
+        // ================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPuIu1FthMH7iGFcIbLuOQBKXrKZzLW8A",
+            authDomain: "crisis-9a170.firebaseapp.com",
+            projectId: "crisis-9a170",
+            storageBucket: "crisis-9a170.firebasestorage.app",
+            messagingSenderId: "937889425194",
+            appId: "1:937889425194:web:fbf74de0eb7db027502053",
+            measurementId: "G-CE6LDFBXGZ"
+        };
+
+        // Global State
+        window.appState = {
+            currentUser: null,
+            problems: [],
+            solutions: [],
+            accessRequests: [],
+            users: [],
+            adminDateFilter: 'all',
+            formMap: null,
+            formMarker: null,
+            landingMap: null,
+            quillProblem: null,
+            quillSolution: null,
+            charts: {},
+            activeModalProblemId: null,
+            uploadedMedia: { probImages: [], probVid: null, solImages: [], solVid: null }
+        };
+
+        let firebaseApp, db, auth;
+        let isFirebaseActive = false;
+
+        function initFirebaseEngine() {
+            if (firebaseConfig && firebaseConfig.apiKey) {
+                try {
+                    firebaseApp = initializeApp(firebaseConfig);
+                    db = getFirestore(firebaseApp);
+                    auth = getAuth(firebaseApp);
+                    isFirebaseActive = true;
+
+                    document.getElementById('storage-mode-text').innerText = "Firebase Cloud (Connected)";
+                    document.getElementById('storage-status-dot').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-1.5";
+                    document.getElementById('firebase-status-badge').className = "hidden md:flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+
+                    setupFirestoreListeners();
+
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user) {
+                            try {
+                                const userDoc = await getDoc(doc(db, "users", user.uid));
+                                if (userDoc.exists()) {
+                                    window.setCurrentUser({ uid: user.uid, ...userDoc.data() });
+                                } else {
+                                    window.setCurrentUser({ uid: user.uid, email: user.email, fullname: user.email.split('@')[0], role: 'author' });
+                                }
+                            } catch (e) {
+                                console.warn("User profile fetch deferred:", e);
+                            }
+                        } else {
+                            window.setCurrentUser(null);
+                        }
+                    });
+
+                } catch (e) {
+                    console.error("Firebase SDK init error:", e);
+                    showToast("Firebase Config error: Check API keys.", "error");
+                }
+            }
+        }
+
+        function setupFirestoreListeners() {
+            if (!db) return;
+
+            onSnapshot(collection(db, "problems"), (snapshot) => {
+                window.appState.problems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderLandingCards();
+                renderExploreCards();
+                updateLandingMapPins();
+                updateVerifiedStats();
+                if (window.appState.currentUser) {
+                    renderUserDashboard();
+                    if (window.appState.currentUser.role === 'admin') {
+                        renderAdminDashboard();
+                        renderAdminAnalyticsCharts();
+                    }
+                }
+            }, (err) => console.error("Firestore problems listener error (Update Security Rules):", err));
+
+            onSnapshot(collection(db, "solutions"), (snapshot) => {
+                window.appState.solutions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                updateVerifiedStats();
+                if (window.appState.currentUser) {
+                    renderUserDashboard();
+                    if (window.appState.currentUser.role === 'admin') {
+                        renderAdminDashboard();
+                        renderAdminAnalyticsCharts();
+                    }
+                }
+            }, (err) => console.error("Firestore solutions listener error (Update Security Rules):", err));
+
+            onSnapshot(collection(db, "access_requests"), (snapshot) => {
+                window.appState.accessRequests = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                updateVerifiedStats();
+                if (window.appState.currentUser) {
+                    renderUserDashboard();
+                    if (window.appState.currentUser.role === 'admin') {
+                        renderAdminDashboard();
+                        renderAdminAnalyticsCharts();
+                    }
+                }
+            }, (err) => console.error("Firestore requests listener error (Update Security Rules):", err));
+
+            onSnapshot(collection(db, "users"), (snapshot) => {
+                window.appState.users = snapshot.docs.map(d => ({ uid: d.id, ...d.data() }));
+                updateVerifiedStats();
+                if (window.appState.currentUser && window.appState.currentUser.role === 'admin') {
+                    renderAdminDashboard();
+                    renderAdminAnalyticsCharts();
+                }
+            }, (err) => console.error("Firestore users listener error (Update Security Rules):", err));
+        }
+
+        // AUTHENTICATION
+        window.handleUserRegistration = async function(e) {
+            e.preventDefault();
+            if (!isFirebaseActive) return;
+
+            const password = document.getElementById('reg-password').value;
+            const confirm = document.getElementById('reg-password-confirm').value;
+            if (password !== confirm) {
+                showToast("Passwords do not match!", "error");
+                return;
+            }
+
+            const email = document.getElementById('reg-email').value.trim();
+            const fullname = document.getElementById('reg-fullname').value.trim();
+            const username = document.getElementById('reg-username').value.trim();
+
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+                const userObj = {
+                    fullname: fullname,
+                    username: username,
+                    email: email,
+                    phone: document.getElementById('reg-phone').value.trim(),
+                    country: document.getElementById('reg-country').value.trim(),
+                    org: document.getElementById('reg-org').value.trim(),
+                    field: document.getElementById('reg-field').value.trim(),
+                    role: 'author',
+                    status: 'ACTIVE',
+                    createdAt: new Date().toISOString()
+                };
+
+                await setDoc(doc(db, "users", cred.user.uid), userObj);
+                showToast("Account created successfully!", "success");
+                closeModal('register-modal');
+            } catch (err) {
+                showToast("Registration failed: " + err.message, "error");
+            }
+        };
+
+        window.handleUserLogin = async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showToast("Signed in successfully!", "success");
+                closeModal('login-modal');
+            } catch (err) {
+                showToast("Authentication failed: " + err.message, "error");
+            }
+        };
+
+        window.handleAdminLogin = async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('admin-login-email').value.trim();
+            const password = document.getElementById('admin-login-password').value;
+            try {
+                const cred = await signInWithEmailAndPassword(auth, email, password);
+                const userDoc = await getDoc(doc(db, "users", cred.user.uid));
+                if (userDoc.exists() && userDoc.data().role === 'admin') {
+                    showToast("Admin Authenticated Successfully!", "success");
+                    closeModal('admin-login-modal');
+                    switchTab('admin-dashboard');
+                } else {
+                    await signOut(auth);
+                    showToast("Access Denied: Not an administrator account.", "error");
+                }
+            } catch (err) {
+                showToast("Admin login failed: " + err.message, "error");
+            }
+        };
+
+        window.setCurrentUser = function(user) {
+            window.appState.currentUser = user;
+            if (user) {
+                document.getElementById('auth-logged-out').classList.add('hidden');
+                document.getElementById('auth-logged-in').classList.remove('hidden');
+                document.getElementById('user-display-name').innerText = user.fullname || user.email;
+                document.getElementById('user-display-role').innerText = user.role || 'Member';
+                document.getElementById('user-avatar-initials').innerText = (user.fullname || user.email).charAt(0).toUpperCase();
+
+                document.getElementById('nav-dashboard').classList.remove('hidden');
+                if (user.role === 'admin') {
+                    document.getElementById('nav-admin').classList.remove('hidden');
+                } else {
+                    document.getElementById('nav-admin').classList.add('hidden');
+                }
+                renderUserDashboard();
+            } else {
+                document.getElementById('auth-logged-out').classList.remove('hidden');
+                document.getElementById('auth-logged-in').classList.add('hidden');
+                document.getElementById('nav-dashboard').classList.add('hidden');
+                document.getElementById('nav-admin').classList.add('hidden');
+            }
+        };
+
+        window.logoutUser = async function() {
+            if (auth) await signOut(auth);
+            window.setCurrentUser(null);
+            showToast("Signed out successfully", "info");
+            switchTab('landing');
+        };
+
+        // NAVIGATION & WIZARD
+        window.switchTab = function(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('tab-' + tabName);
+            if (target) target.classList.remove('hidden');
+
+            if (tabName === 'landing') initLandingMap();
+            else if (tabName === 'submit-wizard') { initQuillEditors(); initFormLeafletMap(); }
+            else if (tabName === 'user-dashboard') renderUserDashboard();
+            else if (tabName === 'admin-dashboard') { renderAdminDashboard(); renderAdminAnalyticsCharts(); }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.handleNewSubmissionClick = function() {
+            if (!window.appState.currentUser) {
+                showToast("Please sign in to submit a crisis.", "info");
+                openModal('login-modal');
+            } else {
+                switchTab('submit-wizard');
+            }
+        };
+
+        function initQuillEditors() {
+            if (!window.appState.quillProblem) {
+                window.appState.quillProblem = new Quill('#editor-problem', { theme: 'snow', placeholder: 'Describe problem, evidence...' });
+            }
+            if (!window.appState.quillSolution) {
+                window.appState.quillSolution = new Quill('#editor-solution', { theme: 'snow', placeholder: 'Formulate implementation steps...' });
+            }
+        }
+
+        function initFormLeafletMap() {
+            setTimeout(() => {
+                if (!window.appState.formMap) {
+                    const map = L.map('map-picker').setView([-1.0388, 37.0833], 7);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    const marker = L.marker([-1.0388, 37.0833], { draggable: true }).addTo(map);
+                    marker.on('dragend', () => {
+                        const coord = marker.getLatLng();
+                        document.getElementById('input-prob-lat').value = coord.lat.toFixed(4);
+                        document.getElementById('input-prob-lng').value = coord.lng.toFixed(4);
+                    });
+                    window.appState.formMap = map;
+                    window.appState.formMarker = marker;
+                } else {
+                    window.appState.formMap.invalidateSize();
+                }
+            }, 200);
+        }
+
+        function initLandingMap() {
+            setTimeout(() => {
+                if (!window.appState.landingMap) {
+                    const map = L.map('landing-map').setView([0.0, 20.0], 2);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    window.appState.landingMap = map;
+                    updateLandingMapPins();
+                } else {
+                    window.appState.landingMap.invalidateSize();
+                    updateLandingMapPins();
+                }
+            }, 200);
+        }
+
+        function updateLandingMapPins() {
+            if (!window.appState.landingMap) return;
+            const published = window.appState.problems.filter(p => p.status === 'PUBLISHED' && p.lat && p.lng);
+            published.forEach(p => {
+                const marker = L.marker([p.lat, p.lng]).addTo(window.appState.landingMap);
+                marker.bindPopup(`<div style="color:#0f172a;width:160px;"><b style="font-size:12px;">${p.title}</b><br><span style="font-size:10px;color:#059669;">${p.region}</span><br><button onclick="window.openProblemModal('${p.id}')" style="margin-top:6px;width:100%;padding:3px;background:#059669;color:#fff;font-size:10px;border-radius:4px;border:none;">Inspect</button></div>`);
+            });
+        }
+
+        window.detectUserLocation = function(target) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    if (target === 'submission') {
+                        document.getElementById('input-prob-lat').value = lat.toFixed(4);
+                        document.getElementById('input-prob-lng').value = lng.toFixed(4);
+                        if (window.appState.formMap) {
+                            window.appState.formMap.setView([lat, lng], 10);
+                            window.appState.formMarker.setLatLng([lat, lng]);
+                        }
+                    } else if (target === 'reg') {
+                        document.getElementById('reg-country').value = `Lat: ${lat.toFixed(2)}, Lng: ${lng.toFixed(2)}`;
+                    }
+                    showToast("Coordinates detected!", "success");
+                });
+            }
+        };
+
+        // MULTIPLE MEDIA & 20MB VIDEO VALIDATION
+        window.handleMultipleMedia = function(input, targetId, prefix) {
+            const container = document.getElementById(targetId);
+            container.innerHTML = '';
+            if (input.files) {
+                const filesArray = Array.from(input.files);
+                filesArray.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        img.onload = function() {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 800;
+                            canvas.height = (img.height * 800) / img.width;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            const compressed = canvas.toDataURL('image/jpeg', 0.7);
+
+                            if (prefix === 'prob') window.appState.uploadedMedia.probImages.push(compressed);
+                            else window.appState.uploadedMedia.solImages.push(compressed);
+
+                            container.innerHTML += `<img src="${compressed}" class="h-20 w-full object-cover rounded-lg border border-slate-700">`;
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        };
+
+        window.handleSingleVideo = function(input, targetId, stage) {
+            const container = document.getElementById(targetId);
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 20 * 1024 * 1024) {
+                    showToast("Video exceeds 20MB size limit.", "error");
+                    input.value = "";
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (stage === 'prob') window.appState.uploadedMedia.probVid = e.target.result;
+                    else window.appState.uploadedMedia.solVid = e.target.result;
+
+                    container.innerHTML = `<video controls class="w-full h-32 rounded-lg bg-black"><source src="${e.target.result}" type="${file.type}"></video>`;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // SUBMISSION HANDLER WITH DATA VALIDATIONS
+        window.handleFormSubmission = async function(e) {
+            e.preventDefault();
+            if (!isFirebaseActive || !db) return;
+
+            const probTitle = document.getElementById('input-prob-title').value.trim();
+            const probDesc = window.appState.quillProblem.root.innerHTML.trim();
+            const solTitle = document.getElementById('input-sol-title').value.trim();
+            const solMethod = window.appState.quillSolution.root.innerHTML.trim();
+
+            if (!probTitle || probTitle.length < 5) {
+                showToast("Provide a valid problem title (min 5 characters).", "error");
+                return;
+            }
+            if (!solTitle || solTitle.length < 5) {
+                showToast("Provide a valid solution title (Mandatory Requirement).", "error");
+                return;
+            }
+
+            const probId = 'prob-' + Date.now();
+            const problemPayload = {
+                title: probTitle,
+                category: document.getElementById('input-prob-category').value,
+                region: document.getElementById('input-prob-region').value,
+                community: document.getElementById('input-prob-community').value,
+                severity: parseInt(document.getElementById('input-prob-severity').value),
+                lat: parseFloat(document.getElementById('input-prob-lat').value),
+                lng: parseFloat(document.getElementById('input-prob-lng').value),
+                description: probDesc,
+                causes: document.getElementById('input-prob-causes').value,
+                impact: document.getElementById('input-prob-impact').value,
+                mediaImages: window.appState.uploadedMedia.probImages,
+                mediaVideo: window.appState.uploadedMedia.probVid,
+                authorId: window.appState.currentUser.uid,
+                authorName: window.appState.currentUser.fullname,
+                status: 'PENDING',
+                createdAt: new Date().toISOString()
+            };
+
+            const solId = 'sol-' + Date.now();
+            const solutionPayload = {
+                problemId: probId,
+                ownerId: window.appState.currentUser.uid,
+                title: solTitle,
+                budget: document.getElementById('input-sol-budget').value,
+                methodology: solMethod,
+                tools: document.getElementById('input-sol-tools').value,
+                risks: document.getElementById('input-sol-risks').value,
+                outcomes: document.getElementById('input-sol-outcomes').value,
+                mediaImages: window.appState.uploadedMedia.solImages,
+                mediaVideo: window.appState.uploadedMedia.solVid,
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                await setDoc(doc(db, "problems", probId), problemPayload);
+                await setDoc(doc(db, "solutions", solId), solutionPayload);
+
+                window.appState.uploadedMedia = { probImages: [], probVid: null, solImages: [], solVid: null };
+                document.getElementById('problem-solution-form').reset();
+                window.appState.quillProblem.setText('');
+                window.appState.quillSolution.setText('');
+
+                showToast("Crisis & Solution successfully submitted for review!", "success");
+                switchTab('user-dashboard');
+            } catch (err) {
+                showToast("Submission error: " + err.message, "error");
+            }
+        };
+
+        // CARDS & EXPLORE
+        function renderLandingCards() {
+            const container = document.getElementById('landing-cards-grid');
+            const published = window.appState.problems.filter(p => p.status === 'PUBLISHED').slice(0, 3);
+            container.innerHTML = published.length === 0 ? `<div class="col-span-3 text-center py-10 text-slate-500">No published crises.</div>` : published.map(p => `
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between">
+                    <div>
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400">${p.category}</span>
+                        <h3 class="font-bold text-white text-lg mt-3 mb-2">${p.title}</h3>
+                        <p class="text-xs text-slate-400 line-clamp-3">${p.description.replace(/<[^>]*>?/gm, '')}</p>
+                    </div>
+                    <button onclick="openProblemModal('${p.id}')" class="mt-4 w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold">Inspect</button>
+                </div>
+            `).join('');
+        }
+
+        window.filterExploreCards = function() { renderExploreCards(); };
+        function renderExploreCards() {
+            const container = document.getElementById('explore-cards-grid');
+            const search = document.getElementById('explore-search-input')?.value.toLowerCase() || '';
+            const filtered = window.appState.problems.filter(p => p.status === 'PUBLISHED' && (p.title.toLowerCase().includes(search) || p.region.toLowerCase().includes(search)));
+            container.innerHTML = filtered.length === 0 ? `<div class="col-span-3 text-center py-10 text-slate-500">No records found.</div>` : filtered.map(p => `
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 flex flex-col justify-between">
+                    <div>
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400">${p.category}</span>
+                        <h3 class="font-bold text-white text-lg mt-3 mb-2">${p.title}</h3>
+                        <p class="text-xs text-slate-400 line-clamp-3">${p.description.replace(/<[^>]*>?/gm, '')}</p>
+                    </div>
+                    <button onclick="openProblemModal('${p.id}')" class="mt-4 w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold">Inspect & Request</button>
+                </div>
+            `).join('');
+        }
+
+        // MODALS & ACCESS
+        window.openProblemModal = function(problemId) {
+            window.appState.activeModalProblemId = problemId;
+            const prob = window.appState.problems.find(p => p.id === problemId);
+            if (!prob) return;
+
+            document.getElementById('modal-prob-title').innerText = prob.title;
+            document.getElementById('modal-prob-category-badge').innerText = prob.category;
+            document.getElementById('modal-prob-meta').innerText = `By ${prob.authorName} • Location: ${prob.region}`;
+            document.getElementById('modal-prob-description').innerHTML = prob.description;
+
+            const imgsGrid = document.getElementById('modal-prob-images-grid');
+            imgsGrid.innerHTML = (prob.mediaImages || []).map(img => `<img src="${img}" class="h-24 w-full object-cover rounded-lg border border-slate-700">`).join('');
+
+            const currUser = window.appState.currentUser;
+            const sol = window.appState.solutions.find(s => s.problemId === problemId);
+            const isOwner = currUser && sol && (sol.ownerId === currUser.uid);
+            const hasAccess = currUser && window.appState.accessRequests.some(r => r.problemId === problemId && r.requesterId === currUser.uid && r.status === 'GRANTED');
+            const isAdmin = currUser && currUser.role === 'admin';
+
+            const solStatusTag = document.getElementById('modal-solution-status-tag');
+            const privateBody = document.getElementById('modal-solution-private-body');
+            const requestAction = document.getElementById('modal-solution-request-action');
+
+            if (isOwner || hasAccess || isAdmin) {
+                solStatusTag.innerText = "ACCESS GRANTED";
+                solStatusTag.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400";
+                privateBody.classList.remove('hidden');
+                requestAction.classList.add('hidden');
+
+                if (sol) {
+                    document.getElementById('modal-sol-title').innerText = sol.title;
+                    document.getElementById('modal-sol-content').innerHTML = sol.methodology;
+                    document.getElementById('modal-sol-budget').innerText = sol.budget;
+                    document.getElementById('modal-sol-tools').innerText = sol.tools || 'Standard tools';
+                    document.getElementById('modal-sol-images-grid').innerHTML = (sol.mediaImages || []).map(img => `<img src="${img}" class="h-20 w-full object-cover rounded-lg">`).join('');
+                }
+            } else {
+                solStatusTag.innerText = "RESTRICTED";
+                privateBody.classList.add('hidden');
+                requestAction.classList.remove('hidden');
+            }
+
+            openModal('modal-view-problem');
+        };
+
+        window.submitAccessRequestFromModal = async function() {
+            if (!window.appState.currentUser) {
+                showToast("Please sign in first.", "warning");
+                openModal('login-modal');
+                return;
+            }
+            const reason = document.getElementById('input-request-reason').value.trim();
+            if (!reason) {
+                showToast("State your reason for requesting access.", "error");
+                return;
+            }
+
+            const reqId = 'req-' + Date.now();
+            await setDoc(doc(db, "access_requests", reqId), {
+                problemId: window.appState.activeModalProblemId,
+                requesterId: window.appState.currentUser.uid,
+                requesterName: window.appState.currentUser.fullname,
+                requesterOrg: window.appState.currentUser.org || 'Independent',
+                requesterPhone: window.appState.currentUser.phone || '',
+                reason: reason,
+                status: 'AWAITING_OWNER',
+                createdAt: new Date().toISOString()
+            });
+
+            showToast("Request sent to solution owner!", "success");
+            closeModal('modal-view-problem');
+        };
+
+        // DASHBOARD & WHATSAPP NOTIFICATIONS
+        window.renderUserDashboard = function() {
+            const user = window.appState.currentUser;
+            if (!user) return;
+
+            const myProbs = window.appState.problems.filter(p => p.authorId === user.uid);
+            const mySolIds = window.appState.solutions.filter(s => s.ownerId === user.uid).map(s => s.problemId);
+            const incomingReqs = window.appState.accessRequests.filter(r => mySolIds.includes(r.problemId) && r.status === 'AWAITING_OWNER');
+            const myGranted = window.appState.accessRequests.filter(r => r.requesterId === user.uid && r.status === 'GRANTED');
+
+            document.getElementById('ud-stat-submissions').innerText = myProbs.length;
+            document.getElementById('ud-stat-published').innerText = myProbs.filter(p => p.status === 'PUBLISHED').length;
+            document.getElementById('ud-stat-requests').innerText = incomingReqs.length;
+            document.getElementById('ud-stat-access-granted').innerText = myGranted.length;
+
+            document.getElementById('ud-table-my-problems').innerHTML = myProbs.length === 0 ? `<tr><td colspan="5" class="py-6 text-center text-slate-500">No submissions recorded.</td></tr>` : myProbs.map(p => `
+                <tr>
+                    <td class="py-3 px-4 text-white font-semibold">${p.title}</td>
+                    <td class="py-3 px-4">${p.category}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">${p.status}</span></td>
+                    <td class="py-3 px-4 text-xs text-slate-400">${new Date(p.createdAt).toLocaleDateString()}</td>
+                    <td class="py-3 px-4 text-right space-x-1">
+                        <button onclick="openProblemModal('${p.id}')" class="text-emerald-400 font-semibold text-xs">Inspect</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('ud-incoming-requests-list').innerHTML = incomingReqs.length === 0 ? `<div class="text-center py-6 text-slate-500 text-sm">No incoming requests.</div>` : incomingReqs.map(r => `
+                <div class="p-4 rounded-xl border border-slate-700 bg-slate-950 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h4 class="font-bold text-white text-sm">${r.requesterName} (${r.requesterOrg})</h4>
+                        <p class="text-xs text-slate-400 italic">"${r.reason}"</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="inspectRequester('${r.requesterId}')" class="px-3 py-1.5 bg-sky-600 text-white rounded-lg text-xs font-semibold">Inspect Requester</button>
+                        <button onclick="handleWhatsAppDecision('${r.id}', 'GRANTED', '${r.requesterPhone}', '${r.requesterName}')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold"><i class="fa-brands fa-whatsapp mr-1"></i> Accept</button>
+                        <button onclick="handleWhatsAppDecision('${r.id}', 'DECLINED', '${r.requesterPhone}', '${r.requesterName}')" class="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-semibold"><i class="fa-brands fa-whatsapp mr-1"></i> Decline</button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Authorized solutions grid
+            const gridAccess = document.getElementById('ud-authorized-solutions-grid');
+            gridAccess.innerHTML = myGranted.length === 0 ? `<div class="text-slate-500 text-xs">No authorized solutions accessed yet.</div>` : myGranted.map(r => {
+                const prob = window.appState.problems.find(p => p.id === r.problemId);
+                return `
+                    <div class="p-4 bg-slate-950 rounded-xl border border-slate-700">
+                        <h4 class="font-bold text-white text-sm">${prob ? prob.title : 'Crisis'}</h4>
+                        <button onclick="openProblemModal('${r.problemId}')" class="mt-2 text-xs text-emerald-400 font-semibold hover:underline">View Blueprint</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.inspectRequester = function(uid) {
+            const reqUser = window.appState.users.find(u => u.uid === uid);
+            if (!reqUser) {
+                showToast("Requester profile details unavailable.", "warning");
+                return;
+            }
+            document.getElementById('inspect-requester-body').innerHTML = `
+                <div><strong>Full Name:</strong> ${reqUser.fullname}</div>
+                <div><strong>Email:</strong> ${reqUser.email}</div>
+                <div><strong>Phone/WhatsApp:</strong> ${reqUser.phone || 'N/A'}</div>
+                <div><strong>Organization:</strong> ${reqUser.org || 'Independent'}</div>
+                <div><strong>Field:</strong> ${reqUser.field || 'N/A'}</div>
+                <div><strong>Country:</strong> ${reqUser.country || 'N/A'}</div>
+            `;
+            openModal('modal-inspect-requester');
+        };
+
+        window.handleWhatsAppDecision = async function(reqId, decision, phone, name) {
+            await updateDoc(doc(db, "access_requests", reqId), { status: decision });
+            
+            let msg = decision === 'GRANTED' 
+                ? `Hello ${name}, your access request to the private solution on Crisis to Solution Platform has been ACCEPTED!`
+                : `Hello ${name}, your access request to the private solution on Crisis to Solution Platform was DECLINED.`;
+
+            if (phone) {
+                const waUrl = `https://api.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(msg)}`;
+                window.open(waUrl, '_blank');
+            }
+            showToast(`Request ${decision} & WhatsApp prompt opened.`, "success");
+        };
+
+        window.switchUserDashTab = function(tabName) {
+            ['my-problems', 'incoming-requests', 'my-access', 'account-settings'].forEach(t => {
+                document.getElementById('ud-tab-' + t).classList.add('hidden');
+                document.getElementById('ud-tab-btn-' + t).className = "px-5 py-3 text-sm font-semibold text-slate-400 hover:text-white whitespace-nowrap";
+            });
+            document.getElementById('ud-tab-' + tabName).classList.remove('hidden');
+            document.getElementById('ud-tab-btn-' + tabName).className = "px-5 py-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-400 whitespace-nowrap";
+        };
+
+        window.updateProfileSettings = async function(e) {
+            e.preventDefault();
+            const user = window.appState.currentUser;
+            if (!user || !db) return;
+
+            const fullname = document.getElementById('ud-set-fullname').value.trim();
+            const phone = document.getElementById('ud-set-phone').value.trim();
+            const org = document.getElementById('ud-set-org').value.trim();
+            const password = document.getElementById('ud-set-password').value;
+
+            try {
+                await updateDoc(doc(db, "users", user.uid), { fullname, phone, org });
+                if (password && auth.currentUser) {
+                    await updatePassword(auth.currentUser, password);
+                }
+                showToast("Profile settings updated live!", "success");
+            } catch (err) {
+                showToast("Error updating profile: " + err.message, "error");
+            }
+        };
+
+        // ADMIN DASHBOARD & ANALYTICS CHARTS
+        window.setAdminDateFilter = function(period) {
+            window.appState.adminDateFilter = period;
+            ['today', '7days', '30days', 'all'].forEach(p => {
+                const btn = document.getElementById('adm-filter-' + p);
+                if (btn) btn.className = p === period ? "px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white" : "px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 text-slate-300 hover:text-white";
+            });
+            renderAdminDashboard();
+            renderAdminAnalyticsCharts();
+        };
+
+        function filterByAdminDate(records) {
+            const filter = window.appState.adminDateFilter;
+            if (filter === 'all') return records;
+            const now = new Date();
+            return records.filter(r => {
+                const d = new Date(r.createdAt || Date.now());
+                const diffDays = (now - d) / (1000 * 3600 * 24);
+                if (filter === 'today') return diffDays < 1;
+                if (filter === '7days') return diffDays <= 7;
+                if (filter === '30days') return diffDays <= 30;
+                return true;
+            });
+        }
+
+        function renderAdminDashboard() {
+            const allProblems = filterByAdminDate(window.appState.problems);
+            const allSolutions = filterByAdminDate(window.appState.solutions);
+            const allRequests = filterByAdminDate(window.appState.accessRequests);
+            const users = window.appState.users;
+
+            document.getElementById('adm-kpi-users').innerText = users.length;
+            document.getElementById('adm-kpi-active-users').innerText = users.filter(u => u.status !== 'SUSPENDED').length;
+            document.getElementById('adm-kpi-suspended').innerText = users.filter(u => u.status === 'SUSPENDED').length;
+            document.getElementById('adm-kpi-problems').innerText = allProblems.length;
+            document.getElementById('adm-kpi-pending-reviews').innerText = allProblems.filter(p => p.status === 'PENDING').length;
+            document.getElementById('adm-kpi-approved-problems').innerText = allProblems.filter(p => p.status === 'APPROVED' || p.status === 'PUBLISHED').length;
+            document.getElementById('adm-kpi-published').innerText = allProblems.filter(p => p.status === 'PUBLISHED').length;
+            document.getElementById('adm-kpi-solutions').innerText = allSolutions.length;
+            document.getElementById('adm-kpi-pending-access').innerText = allRequests.filter(r => r.status === 'PENDING_ADMIN' || r.status === 'AWAITING_OWNER').length;
+            document.getElementById('adm-kpi-granted-access').innerText = allRequests.filter(r => r.status === 'GRANTED').length;
+
+            document.getElementById('adm-table-problems').innerHTML = allProblems.map(p => `
+                <tr>
+                    <td class="py-3 px-4 font-semibold text-white">${p.title}</td>
+                    <td class="py-3 px-4">${p.authorName}</td>
+                    <td class="py-3 px-4">${p.category}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">${p.status}</span></td>
+                    <td class="py-3 px-4 text-right space-x-1">
+                        <button onclick="openProblemModal('${p.id}')" class="px-2 py-1 bg-slate-800 text-slate-300 rounded text-[10px]">Inspect</button>
+                        ${p.status !== 'PUBLISHED' ? `<button onclick="adminSetStatus('${p.id}', 'PUBLISHED')" class="px-2 py-1 bg-emerald-600 text-white rounded text-[10px]">Publish</button>` : `<button onclick="adminSetStatus('${p.id}', 'PENDING')" class="px-2 py-1 bg-amber-600 text-white rounded text-[10px]">Unpublish</button>`}
+                        <button onclick="adminDeleteProblem('${p.id}')" class="px-2 py-1 bg-rose-600 text-white rounded text-[10px]">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Access screening table
+            document.getElementById('adm-table-requests').innerHTML = allRequests.map(r => `
+                <tr>
+                    <td class="py-3 px-4 text-white font-semibold">${r.requesterName}</td>
+                    <td class="py-3 px-4">${r.problemId}</td>
+                    <td class="py-3 px-4 italic text-slate-400">${r.reason}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300">${r.status}</span></td>
+                    <td class="py-3 px-4 text-right">
+                        ${r.status === 'PENDING_ADMIN' ? `<button onclick="adminScreenAccess('${r.id}', 'AWAITING_OWNER')" class="px-2 py-1 bg-emerald-600 text-white rounded text-[10px]">Forward</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+
+            renderAdminUserTable();
+        }
+
+        window.renderAdminUserTable = function() {
+            const users = window.appState.users;
+            const search = document.getElementById('adm-user-search')?.value.toLowerCase() || '';
+            const filtered = users.filter(u => (u.fullname || '').toLowerCase().includes(search) || (u.email || '').toLowerCase().includes(search));
+
+            document.getElementById('adm-table-users').innerHTML = filtered.map(u => `
+                <tr>
+                    <td class="py-3 px-4 text-white font-semibold">${u.fullname} (${u.email})</td>
+                    <td class="py-3 px-4">${u.org || 'N/A'}</td>
+                    <td class="py-3 px-4 uppercase text-emerald-400 font-bold">${u.role}</td>
+                    <td class="py-3 px-4">${u.status || 'ACTIVE'}</td>
+                    <td class="py-3 px-4 text-right"><button onclick="toggleUserStatus('${u.uid}', '${u.status}')" class="px-2 py-1 bg-rose-600 text-white rounded text-[10px]">Toggle Status</button></td>
+                </tr>
+            `).join('');
+        };
+
+        window.adminSetStatus = async function(id, status) {
+            await updateDoc(doc(db, "problems", id), { status });
+            showToast("Problem status updated.", "success");
+        };
+
+        window.adminDeleteProblem = async function(id) {
+            if (confirm("Permanently delete this submission?")) {
+                await deleteDoc(doc(db, "problems", id));
+                showToast("Record deleted successfully.", "info");
+            }
+        };
+
+        window.adminScreenAccess = async function(reqId, status) {
+            await updateDoc(doc(db, "access_requests", reqId), { status });
+            showToast("Access request screened.", "success");
+        };
+
+        window.toggleUserStatus = async function(uid, status) {
+            const newStatus = status === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED';
+            await updateDoc(doc(db, "users", uid), { status: newStatus });
+            showToast("User status updated.", "info");
+        };
+
+        window.renderAdminAnalyticsCharts = function() {
+            const problems = filterByAdminDate(window.appState.problems);
+            const solutions = filterByAdminDate(window.appState.solutions);
+            const requests = filterByAdminDate(window.appState.accessRequests);
+
+            const ctxStatus = document.getElementById('chart-problem-status');
+            if (ctxStatus) {
+                if (window.appState.charts.status) window.appState.charts.status.destroy();
+                window.appState.charts.status = new Chart(ctxStatus, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Published', 'Pending', 'Rejected'],
+                        datasets: [{ data: [problems.filter(p => p.status === 'PUBLISHED').length, problems.filter(p => p.status === 'PENDING').length, problems.filter(p => p.status === 'REJECTED').length], backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const ctxSol = document.getElementById('chart-solution-status');
+            if (ctxSol) {
+                if (window.appState.charts.sol) window.appState.charts.sol.destroy();
+                window.appState.charts.sol = new Chart(ctxSol, {
+                    type: 'pie',
+                    data: { labels: ['Solutions Vault'], datasets: [{ data: [solutions.length], backgroundColor: ['#06b6d4'] }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const ctxPipe = document.getElementById('chart-access-pipeline');
+            if (ctxPipe) {
+                if (window.appState.charts.pipe) window.appState.charts.pipe.destroy();
+                window.appState.charts.pipe = new Chart(ctxPipe, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Pending Admin', 'Awaiting Owner', 'Granted', 'Declined'],
+                        datasets: [{ data: [requests.filter(r => r.status === 'PENDING_ADMIN').length, requests.filter(r => r.status === 'AWAITING_OWNER').length, requests.filter(r => r.status === 'GRANTED').length, requests.filter(r => r.status === 'DECLINED').length], backgroundColor: ['#f59e0b', '#6366f1', '#10b981', '#ef4444'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const ctxCat = document.getElementById('chart-categories-bar');
+            if (ctxCat) {
+                if (window.appState.charts.cat) window.appState.charts.cat.destroy();
+                const counts = {};
+                problems.forEach(p => { counts[p.category] = (counts[p.category] || 0) + 1; });
+                window.appState.charts.cat = new Chart(ctxCat, {
+                    type: 'bar',
+                    data: { labels: Object.keys(counts), datasets: [{ label: 'Crises Recorded', data: Object.values(counts), backgroundColor: '#3b82f6' }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const ctxLine = document.getElementById('chart-trends-line');
+            if (ctxLine) {
+                if (window.appState.charts.line) window.appState.charts.line.destroy();
+                window.appState.charts.line = new Chart(ctxLine, {
+                    type: 'line',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [
+                            { label: 'Submissions', data: [problems.length, problems.length + 1, problems.length + 3, problems.length + 5], borderColor: '#10b981', fill: false },
+                            { label: 'Solutions', data: [solutions.length, solutions.length + 1, solutions.length + 2, solutions.length + 4], borderColor: '#06b6d4', fill: false }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        };
+
+        window.exportAdminCSVReport = function() {
+            let csv = "ID,Title,Category,Author,Status,CreatedAt\n";
+            window.appState.problems.forEach(p => {
+                csv += `"${p.id}","${p.title.replace(/"/g, '""')}","${p.category}","${p.authorName}","${p.status}","${p.createdAt}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `platform_report_${Date.now()}.csv`;
+            a.click();
+            showToast("CSV report generated!", "success");
+        };
+
+        function updateVerifiedStats() {
+            const elUsers = document.getElementById('stat-total-users');
+            if (elUsers) elUsers.innerText = window.appState.users.length;
+            const elProbs = document.getElementById('stat-problems');
+            if (elProbs) elProbs.innerText = window.appState.problems.length;
+            const elSols = document.getElementById('stat-solutions');
+            if (elSols) elSols.innerText = window.appState.solutions.length;
+            const elGranted = document.getElementById('stat-granted');
+            if (elGranted) elGranted.innerText = window.appState.accessRequests.filter(r => r.status === 'GRANTED').length;
+        }
+
+        window.openModal = id => document.getElementById(id).classList.remove('hidden');
+        window.closeModal = id => document.getElementById(id).classList.add('hidden');
+        window.togglePasswordVisibility = id => {
+            const el = document.getElementById(id);
+            el.type = el.type === 'password' ? 'text' : 'password';
+        };
+
+        window.showToast = function(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800';
+            toast.className = `${bg} text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-2 border border-slate-700`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initFirebaseEngine();
+            initLandingMap();
+        });
+    </script>
+</body>
+</html>
